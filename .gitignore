@@ -68,6 +68,7 @@ instance/
 DataTools/Data_Generation/outputs/*
 !DataTools/Data_Generation/fonts/A Badkhat.ttf
 !DataTools/Data_Generation/fonts/B Ziba_0.ttf
+DataTools/Data_Generation/backgrounds
 # Scrapy stuff:
 .scrapy
 
