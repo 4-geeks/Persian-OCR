@@ -42,16 +42,15 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
             for bg_idx, bg in enumerate(bgs):
                 if isinstance(size, int):
                     pass
-                elif isinstance(size, list):
-                    size = np.random.choice(size)
                 elif size == 'random' or size is None:
                     size = int(np.random.randint(110,150,1))
                     
-                bbx, sizes = get_rect_size_for_word(word, font, size)
+                O_old, sizes = get_rect_size_for_word(word, font, size)
                 bg = resize_bg(bg, sizes)
-                img = create_word(word, font_name= font,bg = bg, size= int(size//1.0))
+                img = create_word(word, font_name = font,bg = bg, size= int(size//1.2) , O_old = O_old, shift=False)
                 img = augment(img, p = noise_p)
-                img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
+                font_name = os.path.split(font)[-1].split('.')[0]
+                img.save(os.path.join(output_dir , f'{font_name}.png') )
                 counter += 1
     print(f'{counter} Images created')
     t2 = t()
