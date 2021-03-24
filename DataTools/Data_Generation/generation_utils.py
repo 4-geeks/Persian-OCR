@@ -1,7 +1,7 @@
 import numpy as np
 import PIL
 import arabic_reshaper
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from bidi.algorithm import get_display
 import os
 from glob import glob
@@ -14,7 +14,7 @@ if 'ipykernel' in sys.modules:
 else:
     from tqdm import tqdm
 
-def create_word(word, font_name, bg = None , size = 60 , word_loc = (0,0), color = None , bg_size = (100,300), bg_color = (200)):
+def create_word(word, font_name, offsets = (0,0) , bg = None , size = 60, color = None , bg_size = (100,300), bg_color = (200)):
     if bg is None:
         bg_size = np.array(bg_size).astype(int)
         background = np.ones((*bg_size,3) , dtype = 'uint8') * bg_color
@@ -29,9 +29,15 @@ def create_word(word, font_name, bg = None , size = 60 , word_loc = (0,0), color
     font = ImageFont.truetype(font_name, size=size)
     reshaped_text = arabic_reshaper.reshape(word)
     bidi_text = get_display(reshaped_text)
-    x, y = bg_size[1]//2 , (bg_size[0]) //2
-    x = x + int(np.random.randint(low = 0, high = bg_size[1]//15, size = 1))
-    y = y - int(np.random.randint(low = bg_size[1]//35, high = bg_size[1]//20, size = 1))
+    o_x_offset, o_y_offset = offsets
+    # print(background.size)
+#     print(o_x_offset,o_y_offset)
+    o_x_offset = -int(o_x_offset * background.size[0])
+    o_y_offset = -int(o_y_offset * background.size[1])
+#     print(o_x_offset,o_y_offset)
+    x, y = background.size[0]//2 + o_x_offset ,background.size[1]//2 + o_y_offset
+    x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
+    y = y + int(np.random.randint(low = -background.size[1]//30, high = background.size[1]//30, size = 1))
     draw.text((x, y), bidi_text, fill=color, font=font, anchor = 'mm')
     return background
 
@@ -58,6 +64,7 @@ def get_all_words(corpuses_dir):
         lines = file.read()
         all_words.extend(lines.split('\n'))
 #     print(f'Found {len(all_words)} words in the dataset.')
+    all_words = list(filter(lambda x:len(x), all_words))
     return all_words
 
 def img_to_bbx(img):
@@ -67,12 +74,16 @@ def img_to_bbx(img):
     y_min, x_min = np.min(args,0)
 #     plt.imshow(img[y_min:y_max, x_min:x_max,:])
     bbx = (x_min,x_max), (y_min, y_max)
+    o_x_offset = (x_min + x_max) / img.shape[1]  - 1
+    o_y_offset = (y_min + y_max) / img.shape[0]  - 1
+    offsets = [o_x_offset , o_y_offset]
+#     print(o_x_offset,o_y_offset)
     sizes = np.array((y_max- y_min, x_max - x_min))
-    return bbx, sizes
+    return offsets, sizes
 
-def get_rect_size_for_word(word, font, size):
+def get_rect_size_for_word(word, font, size, bg_size = (400,700)):
     img = create_word(word, font_name = font, size = size, color = (255,255,255), 
-                bg_size = (400,700), bg_color = (0,0,0) )
+                bg_size = bg_size, bg_color = (0,0,0))
     return img_to_bbx(img)
 
 def resize_bg(backgroud_img, target_size):
@@ -82,15 +93,24 @@ def resize_bg(backgroud_img, target_size):
     bg = Image.fromarray(bg)
     return bg
 
-def add_random_noise(img, p = 0.5):
+def augment(img, p = 0.5):
     filters = [ImageFilter.GaussianBlur(), ImageFilter.SHARPEN()]
     epsilon = np.random.rand(1)
-    if epsilon < 0.5:
+    if epsilon < p:
         epsilon = int(epsilon * len(filters))
         f = filters[epsilon]
         if f.name == 'GaussianBlur':
             f.radius = np.random.rand(1) * 1.5
         img = img.filter(f)
+        
+        epsilon = np.random.rand(1)
+        if epsilon < 0.4:
+            img = img.rotate(np.random.randint(-4,4,1))
+
+        epsilon = np.random.rand(1)
+        if epsilon < 0.4:
+            img = ImageEnhance.Contrast(img).enhance(np.random.rand(1) + 0.5)
+    
     return img
 
 def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 'outputs/'):
@@ -121,10 +141,10 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
                 elif size == 'random' or size is None:
                     size = int(np.random.randint(110,150,1))
                     
-                bbx, sizes = get_rect_size_for_word(word, font, size)
-                bg = resize_bg(bg, 1.2 * sizes)
-                img = create_word(word, font_name= font,bg = bg, bg_size = 1.2*sizes, size= int(size//1.2))
-                img = add_random_noise(img, p = noise_p)
+                offsets, sizes = get_rect_size_for_word(word, font, size)
+                bg = resize_bg(bg, 1.25 * sizes)
+                img = create_word(word,offsets = offsets ,font_name= font,bg = bg , size= int(size//1.2))
+                img = augment(img, p = noise_p)
                 img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
                 counter += 1
     print(f'{counter} Images created')
