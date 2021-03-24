@@ -14,7 +14,10 @@ if 'ipykernel' in sys.modules:
 else:
     from tqdm import tqdm
 
-def create_word(word, font_name ,O_old = (0,0), offsets = (0,0) ,for_size_detection = False , bg = None ,shift = True ,size = 60, color = None , bg_size = (100,300), bg_color = (200)):
+def create_word(word, font_name ,sizes = None ,O_old = (0,0),
+                for_size_detection = False , bg = None ,shift = True ,
+                size = 60, color = None , bg_size = (100,300), bg_color = (200),
+                size_factor = 1.2, tight = False):
     if bg is None:
         bg_size = np.array(bg_size).astype(int)
         background = np.ones((*bg_size,3) , dtype = 'uint8') * bg_color
@@ -25,10 +28,7 @@ def create_word(word, font_name ,O_old = (0,0), offsets = (0,0) ,for_size_detect
     if color is None:
         color = tuple(np.random.randint(low = 0, high = 70, size = 3))
     
-    draw = ImageDraw.Draw(background)
-    font = ImageFont.truetype(font_name, size=size)
-    reshaped_text = arabic_reshaper.reshape(word)
-    bidi_text = get_display(reshaped_text)
+    
 #     o_x_offset, o_y_offset = offsets
 #     print(background.size)
 #     print(o_x_offset,o_y_offset)
@@ -36,14 +36,37 @@ def create_word(word, font_name ,O_old = (0,0), offsets = (0,0) ,for_size_detect
 #     o_y_offset = -int(o_y_offset * background.size[1])
 #     print(o_x_offset,o_y_offset)
 #     x, y = background.size[0]//2 + o_x_offset ,background.size[1]//2 + o_y_offset
+
+    
     if not for_size_detection:
-        O_old = np.array(O_old)
-        x, y = np.array(background.size) // 2 - O_old
+        O_old = np.array(O_old) // size_factor
+        x, y = np.array(background.size) // 2 - O_old 
+        size = int(size // size_factor)
+        size_y, size_x = sizes // size_factor
+        margin_x = int((background.size[0] - size_x)//2)
+        margin_y = int((background.size[1] - size_y)//2 // 1.2) 
+#         margin = int(background.size[0] * (size_factor - 1) // 1.8) 
+#         print(margin)
+        
     else:
+        size_factor = 1
+        margin_x, margin_y = 0,0
         x,y = 0,0
-    if shift:
-        x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
-        y = y + int(np.random.randint(low = -background.size[1]//30, high = background.size[1]//30, size = 1))
+    
+    
+    
+    if shift :
+        if margin_x:
+            x = x + int(np.random.randint(low = -margin_x, high = margin_x, size = 1))
+#         x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
+        if margin_y:
+            y = y + int(np.random.randint(low = -margin_y, high = margin_y, size = 1))
+#     print(margin_x,margin_y)
+    
+    draw = ImageDraw.Draw(background)
+    font = ImageFont.truetype(font_name, size=size)
+    reshaped_text = arabic_reshaper.reshape(word)
+    bidi_text = get_display(reshaped_text)
     draw.text((x, y), bidi_text, fill=color, font=font)
     return background
 
@@ -146,7 +169,66 @@ def augment(img, p = 0.5):
     
     return img
 
-def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 'outputs/'):
+
+def gaussian_noise(image):
+    epsilon = np.random.rand()
+    if epsilon >= 0.7:
+        return image
+    image = np.array(image)[...,:3]
+#     if image.max()>1:
+#         image = image / 255.0
+    row,col,ch= image.shape
+    mean = 0
+    var = 50
+    sigma = var**0.5
+    gauss = np.random.normal(mean,sigma,(row,col,ch))
+    gauss = gauss.reshape(row,col,ch)
+    noisy = image + gauss
+#     noisy = (noisy * 255.0).astype('uint8')
+    noisy = noisy.astype('uint8')
+    noisy = Image.fromarray(noisy)
+    return noisy
+
+def salt_and_pepper(image):
+    prob = np.random.randint(0,100) / 1000
+    epsilon = np.random.rand()
+    if epsilon <= 0.6:
+        return image
+
+    arr = np.asarray(image)
+    original_dtype = arr.dtype
+
+    # Derive the number of intensity levels from the array datatype.
+    intensity_levels = 2 ** (arr[0, 0].nbytes * 8)
+
+    min_intensity = 0
+    max_intensity = intensity_levels - 1
+
+    # Generate an array with the same shape as the image's:
+    # Each entry will have:
+    # 1 with probability: 1 - prob
+    # 0 or np.nan (50% each) with probability: prob
+    random_image_arr = np.random.choice(
+        [min_intensity, 1, np.nan], p=[prob / 2, 1 - prob, prob / 2], size=arr.shape
+    )
+
+    # This results in an image array with the following properties:
+    # - With probability 1 - prob: the pixel KEEPS ITS VALUE (it was multiplied by 1)
+    # - With probability prob/2: the pixel has value zero (it was multiplied by 0)
+    # - With probability prob/2: the pixel has value np.nan (it was multiplied by np.nan)
+    # We need to to `arr.astype(np.float)` to make sure np.nan is a valid value.
+    salt_and_peppered_arr = arr.astype(np.float) * random_image_arr
+
+    # Since we want SALT instead of NaN, we replace it.
+    # We cast the array back to its original dtype so we can pass it to PIL.
+    salt_and_peppered_arr = np.nan_to_num(
+        salt_and_peppered_arr, nan=max_intensity
+    ).astype(original_dtype)
+
+    return Image.fromarray(salt_and_peppered_arr)
+
+
+def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,output_dir = 'outputs/', tight = False):
     t1 = t()
     counter = 0
     os.makedirs(output_dir , exist_ok = True)
@@ -164,18 +246,31 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
     print(f'Found {len(fonts)} fonts.')
     print(f'Found {len(bgs)} background images.')
     print(f'In total {len(words) * len(fonts) * len(bgs)} Images will be created')
-    for w_idx, word in enumerate(tqdm(words)):
-        for f_idx, font in enumerate(fonts):
+    for w_idx, word in enumerate(tqdm(words[:])):
+        for f_idx, font in enumerate(fonts[:]):
             for bg_idx, bg in enumerate(bgs):
                 if isinstance(size, int):
                     pass
+                elif isinstance(size, list):
+                    size = np.random.choice(size)
                 elif size == 'random' or size is None:
                     size = int(np.random.randint(110,150,1))
                     
                 O_old, sizes = get_rect_size_for_word(word, font, size)
-                bg = resize_bg(bg, sizes)
-                img = create_word(word, font_name = font,bg = bg, size= int(size//1.0) , O_old = O_old)
-                img = augment(img, p = noise_p)
+                if not tight:
+                    size_factor = np.random.randint(120,150) / 100
+                    x_factor = 1.5 + np.random.rand()
+                    y_factor = 1 + np.random.rand() // 4
+                else: x_factor, y_factor, size_factor = 1 , 1 , 1.05
+                bg = resize_bg(bg, sizes, x_factor = x_factor, y_factor=y_factor)
+                img = create_word(word, font_name= font,bg = bg, size= size, shift=True,
+                                  O_old = O_old, sizes = sizes, size_factor=size_factor)
+                img = augment(img, p = augment_p)
+
+                img = salt_and_pepper(img)
+
+                img = gaussian_noise(img)
+
                 img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
                 counter += 1
     print(f'{counter} Images created')
