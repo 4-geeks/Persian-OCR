@@ -11,11 +11,13 @@ parser.add_argument('--output-dir', type=str, default='outputs',
  help='Directory to save the output images')
 parser.add_argument('--size', type = int, default= None,
  help='size of the words that you want to create.')
-parser.add_argument('--augment-prob', type = int, default= 0.5,
- help='Directory that contains the backgrounds')
+parser.add_argument('--augment-prob', type = float, default= 0.5,
+ help='augmentation rate')
 parser.add_argument('--tight', action = 'store_true' , help =  'Wether you want the text to tightly fit the background')
-opt = parser.parse_args()
+parser.add_argument('--keep-rate', type = float, help = 'The ratio for saving the images.' , default=0.5)
 
+opt = parser.parse_args()
+print('hi', opt.keep_rate)
 
 if __name__ == '__main__':
     create_data_set(words = opt.word_bank,
@@ -24,4 +26,5 @@ if __name__ == '__main__':
                     size = None,
                     augment_p = opt.augment_prob,
                     output_dir = opt.output_dir,
-                    tight= opt.tight)
+                    tight= opt.tight,
+                    keep_rate = opt.keep_rate)

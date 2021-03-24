@@ -8,6 +8,8 @@ from glob import glob
 import cv2
 from tqdm import tqdm
 import sys
+import json
+import datetime
 from time import time as t
 if 'ipykernel' in sys.modules:
     from tqdm.notebook import tqdm
@@ -29,15 +31,6 @@ def create_word(word, font_name ,sizes = None ,O_old = (0,0),
         color = tuple(np.random.randint(low = 0, high = 70, size = 3))
     
     
-#     o_x_offset, o_y_offset = offsets
-#     print(background.size)
-#     print(o_x_offset,o_y_offset)
-#     o_x_offset = -int(o_x_offset * background.size[0])
-#     o_y_offset = -int(o_y_offset * background.size[1])
-#     print(o_x_offset,o_y_offset)
-#     x, y = background.size[0]//2 + o_x_offset ,background.size[1]//2 + o_y_offset
-
-    
     if not for_size_detection:
         O_old = np.array(O_old) // size_factor
         x, y = np.array(background.size) // 2 - O_old 
@@ -45,9 +38,7 @@ def create_word(word, font_name ,sizes = None ,O_old = (0,0),
         size_y, size_x = sizes // size_factor
         margin_x = int((background.size[0] - size_x)//2)
         margin_y = int((background.size[1] - size_y)//2 // 1.2) 
-#         margin = int(background.size[0] * (size_factor - 1) // 1.8) 
-#         print(margin)
-        
+
     else:
         size_factor = 1
         margin_x, margin_y = 0,0
@@ -58,11 +49,9 @@ def create_word(word, font_name ,sizes = None ,O_old = (0,0),
     if shift :
         if margin_x:
             x = x + int(np.random.randint(low = -margin_x, high = margin_x, size = 1))
-#         x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
         if margin_y:
             y = y + int(np.random.randint(low = -margin_y, high = margin_y, size = 1))
-#     print(margin_x,margin_y)
-    
+
     draw = ImageDraw.Draw(background)
     font = ImageFont.truetype(font_name, size=size)
     reshaped_text = arabic_reshaper.reshape(word)
@@ -70,15 +59,17 @@ def create_word(word, font_name ,sizes = None ,O_old = (0,0),
     draw.text((x, y), bidi_text, fill=color, font=font)
     return background
 
+def generate_name(output_dir):
+    name = str(datetime.datetime.now()).replace('-','').replace(':','').replace(' ','_').replace('.','_') + '.png'
+    name = os.path.join(output_dir, name)
+    return name
 
 def get_all_fonts(fonts_dir):
     fonts_names = glob(os.path.join(fonts_dir , '*ttf'))
-#     print(f'Found {len(fonts_names)} fonts in the given directory')
     return fonts_names
 
 def get_all_bgs(bgs_dir):
     bgs_names = glob(os.path.join(bgs_dir , '*'))
-#     print(f'Found {len(bgs_names)} backgrounds in the given directory')
     all_imgs = []
     for bg_name in bgs_names:
         bg = cv2.imread(bg_name)[...,::-1]
@@ -98,7 +89,6 @@ def get_all_words(corpuses_dir):
             lines = file.read()
         
         all_words.extend(lines.split('\n'))
-#     print(f'Found {len(all_words)} words in the dataset.')
     all_words = list(filter(lambda x:len(x), all_words))
     return all_words
 
@@ -107,16 +97,12 @@ def img_to_bbx(img):
     args = np.argwhere(img[...,0]>0)
     y_max, x_max = np.max(args,0)
     y_min, x_min = np.min(args,0)
-#     plt.imshow(img[y_min:y_max, x_min:x_max,:])
-#     plt.imshow(img)
     bbx = (x_min,x_max), (y_min, y_max)
-#     print(y_min,y_max)
-    
-#     
+  
     o_x_offset = ((x_min + x_max) / img.shape[1] ) - 1
     o_y_offset = ((y_min + y_max) / img.shape[0] ) - 1
     offsets = [o_x_offset , o_y_offset]
-#     print(o_x_offset,o_y_offset)
+
     sizes = np.array((y_max- y_min, x_max - x_min))
     return offsets, sizes, bbx
 
@@ -130,8 +116,6 @@ def get_rect_size_for_word(word, font, size, bg_size = None):
     offsets, sizes, bbx = img_to_bbx(img)
     (x_min,x_max), (y_min, y_max) = bbx
     O_old = np.array([(x_min+x_max)//2 , (y_min + y_max)//2])
-#     O_target = np.array(bg_size)[::-1] // 2
-#     x_new, y_new = O_target - O_old
     return O_old , sizes
 
 
@@ -175,8 +159,6 @@ def gaussian_noise(image):
     if epsilon >= 0.7:
         return image
     image = np.array(image)[...,:3]
-#     if image.max()>1:
-#         image = image / 255.0
     row,col,ch= image.shape
     mean = 0
     var = 50
@@ -184,7 +166,6 @@ def gaussian_noise(image):
     gauss = np.random.normal(mean,sigma,(row,col,ch))
     gauss = gauss.reshape(row,col,ch)
     noisy = image + gauss
-#     noisy = (noisy * 255.0).astype('uint8')
     noisy = noisy.astype('uint8')
     noisy = Image.fromarray(noisy)
     return noisy
@@ -194,33 +175,16 @@ def salt_and_pepper(image):
     epsilon = np.random.rand()
     if epsilon <= 0.6:
         return image
-
     arr = np.asarray(image)
     original_dtype = arr.dtype
-
-    # Derive the number of intensity levels from the array datatype.
     intensity_levels = 2 ** (arr[0, 0].nbytes * 8)
 
     min_intensity = 0
     max_intensity = intensity_levels - 1
-
-    # Generate an array with the same shape as the image's:
-    # Each entry will have:
-    # 1 with probability: 1 - prob
-    # 0 or np.nan (50% each) with probability: prob
     random_image_arr = np.random.choice(
         [min_intensity, 1, np.nan], p=[prob / 2, 1 - prob, prob / 2], size=arr.shape
     )
-
-    # This results in an image array with the following properties:
-    # - With probability 1 - prob: the pixel KEEPS ITS VALUE (it was multiplied by 1)
-    # - With probability prob/2: the pixel has value zero (it was multiplied by 0)
-    # - With probability prob/2: the pixel has value np.nan (it was multiplied by np.nan)
-    # We need to to `arr.astype(np.float)` to make sure np.nan is a valid value.
     salt_and_peppered_arr = arr.astype(np.float) * random_image_arr
-
-    # Since we want SALT instead of NaN, we replace it.
-    # We cast the array back to its original dtype so we can pass it to PIL.
     salt_and_peppered_arr = np.nan_to_num(
         salt_and_peppered_arr, nan=max_intensity
     ).astype(original_dtype)
@@ -228,11 +192,41 @@ def salt_and_pepper(image):
     return Image.fromarray(salt_and_peppered_arr)
 
 
-def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,output_dir = 'outputs/', tight = False):
+def generate_name(output_dir, data_type = 'img'):
+    if data_type == 'img':
+        name = str(datetime.datetime.now()).replace('-','').replace(':','').replace(' ','_').replace('.','_') + '.png'
+        name = os.path.join(output_dir,'images' , name)
+    else :
+        name = str(datetime.datetime.now()).replace('-','').replace(':','').replace(' ','_').replace('.','_')+'.json'
+        name = os.path.join(output_dir,'labels' , name)
+
+    return name
+
+def create_label(img, name, word):
+    current_data = {}
+    current_data['imagePath'] = name
+    current_data['imageHeight'] = img.size[1]
+    current_data['imageWidth'] = img.size[0]
+    current_data['label'] = word
+    return current_data
+
+
+def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,
+                    output_dir = 'outputs/',keep_rate = 0.5 , tight = False):
+
+    labels = {}
+    labels['version'] = 1.1
+    labels['Created By'] = 'Geeks'
+    labels['date'] = str(datetime.datetime.now())
+    all_data = []
+
     t1 = t()
     counter = 0
     os.makedirs(output_dir , exist_ok = True)
-    print('Output directory craeted.')
+    os.makedirs(os.path.join(output_dir,'images') , exist_ok = True)
+    os.makedirs(os.path.join(output_dir,'labels') , exist_ok = True)
+
+    print('Output directory created.')
     assert isinstance(words, str) or isinstance(all_words, list) , "words argument should be either list or str"
     if isinstance(words, str):
         words = get_all_words(words)
@@ -245,10 +239,13 @@ def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,output_dir 
     print(f'Found {len(words)} words.')
     print(f'Found {len(fonts)} fonts.')
     print(f'Found {len(bgs)} background images.')
-    print(f'In total {len(words) * len(fonts) * len(bgs)} Images will be created')
+    print(f'In total, there are {(len(words) * len(fonts) * len(bgs) )} different combinations of images')
     for w_idx, word in enumerate(tqdm(words[:])):
         for f_idx, font in enumerate(fonts[:]):
             for bg_idx, bg in enumerate(bgs):
+                create_this_combination = np.random.randn()
+                if create_this_combination > keep_rate:
+                    continue
                 if isinstance(size, int):
                     pass
                 elif isinstance(size, list):
@@ -271,8 +268,18 @@ def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,output_dir 
 
                 img = gaussian_noise(img)
 
-                img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
+                name = generate_name(output_dir, 'img')
+                img.save(name)
+                label = create_label(img,name,word)
+                all_data.append(label)
                 counter += 1
     print(f'{counter} Images created')
+    print('Exporing labels....')
+    output_name = generate_name(output_dir, 'label')
+    labels['data'] = all_data
+    outfile = open(output_name, 'w',encoding="utf-8")
+    json.dump(labels, outfile, indent=4, ensure_ascii=False)
+    outfile.close()
+    
     t2 = t()
     print(f'Time Taken : {np.round(t2-t1,2)} second')
