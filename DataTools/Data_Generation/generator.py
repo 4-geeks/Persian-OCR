@@ -17,7 +17,7 @@ parser.add_argument('--tight', action = 'store_true' , help =  'Wether you want 
 parser.add_argument('--keep-rate', type = float, help = 'The ratio for saving the images.' , default=0.5)
 
 opt = parser.parse_args()
-print('hi', opt.keep_rate)
+
 
 if __name__ == '__main__':
     create_data_set(words = opt.word_bank,

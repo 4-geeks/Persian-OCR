@@ -195,10 +195,10 @@ def salt_and_pepper(image):
 def generate_name(output_dir, data_type = 'img'):
     if data_type == 'img':
         name = str(datetime.datetime.now()).replace('-','').replace(':','').replace(' ','_').replace('.','_') + '.png'
-        name = os.path.join(output_dir,'images' , name)
+        name = os.path.join(output_dir , name)
     else :
         name = str(datetime.datetime.now()).replace('-','').replace(':','').replace(' ','_').replace('.','_')+'.json'
-        name = os.path.join(output_dir,'labels' , name)
+        name = os.path.join(output_dir , name)
 
     return name
 
@@ -217,14 +217,20 @@ def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,
     labels = {}
     labels['version'] = 1.1
     labels['Created By'] = 'Geeks'
-    labels['date'] = str(datetime.datetime.now())
+    right_now = str(datetime.datetime.now())
+    labels['date'] = right_now
+    exp_name = right_now.replace('-','').replace(':','').replace(' ','_').replace('.','_')
+    output_name = os.path.join(output_dir, exp_name + '.json')
+    output_dir = os.path.join(output_dir , exp_name)
+    
     all_data = []
+
 
     t1 = t()
     counter = 0
     os.makedirs(output_dir , exist_ok = True)
-    os.makedirs(os.path.join(output_dir,'images') , exist_ok = True)
-    os.makedirs(os.path.join(output_dir,'labels') , exist_ok = True)
+    # os.makedirs(os.path.join(output_dir,'images') , exist_ok = True)
+    # os.makedirs(os.path.join(output_dir,'labels') , exist_ok = True)
 
     print('Output directory created.')
     assert isinstance(words, str) or isinstance(all_words, list) , "words argument should be either list or str"
@@ -275,7 +281,7 @@ def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,
                 counter += 1
     print(f'{counter} Images created')
     print('Exporing labels....')
-    output_name = generate_name(output_dir, 'label')
+    
     labels['data'] = all_data
     outfile = open(output_name, 'w',encoding="utf-8")
     json.dump(labels, outfile, indent=4, ensure_ascii=False)
