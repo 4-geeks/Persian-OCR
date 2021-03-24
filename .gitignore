@@ -66,10 +66,18 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+
+######################################################
+# Data Generation
 DataTools/Data_Generation/outputs/*
+DataTools/Data_Generation/word_bank/*
+DataTools/Data_Generation/backgrounds/*
+!DataTools/Data_Generation/word_bank/first_test.txt
+!DataTools/Data_Generation/word_bank/second_test.txt
 !DataTools/Data_Generation/fonts/A Badkhat.ttf
 !DataTools/Data_Generation/fonts/B Ziba_0.ttf
-DataTools/Data_Generation/backgrounds
+
+
 # Scrapy stuff:
 .scrapy
 
