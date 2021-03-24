@@ -40,16 +40,16 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
     for w_idx, word in enumerate(tqdm(words)):
         for f_idx, font in enumerate(fonts):
             for bg_idx, bg in enumerate(bgs):
-                if isinstance(size, str):
+                if isinstance(size, int):
                     pass
                 elif isinstance(size, list):
                     size = np.random.choice(size)
                 elif size == 'random' or size is None:
                     size = int(np.random.randint(110,150,1))
                     
-                offsets, sizes = get_rect_size_for_word(word, font, size)
-                bg = resize_bg(bg, 1.25 * sizes)
-                img = create_word(word,offsets = offsets ,font_name= font,bg = bg , size= int(size//1.2))
+                bbx, sizes = get_rect_size_for_word(word, font, size)
+                bg = resize_bg(bg, sizes)
+                img = create_word(word, font_name= font,bg = bg, size= int(size//1.0))
                 img = augment(img, p = noise_p)
                 img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
                 counter += 1

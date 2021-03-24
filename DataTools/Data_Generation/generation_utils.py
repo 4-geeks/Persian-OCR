@@ -14,7 +14,7 @@ if 'ipykernel' in sys.modules:
 else:
     from tqdm import tqdm
 
-def create_word(word, font_name, offsets = (0,0) , bg = None , size = 60, color = None , bg_size = (100,300), bg_color = (200)):
+def create_word(word, font_name, offsets = (0,0) , bg = None ,shift = True ,size = 60, color = None , bg_size = (100,300), bg_color = (200)):
     if bg is None:
         bg_size = np.array(bg_size).astype(int)
         background = np.ones((*bg_size,3) , dtype = 'uint8') * bg_color
@@ -30,14 +30,15 @@ def create_word(word, font_name, offsets = (0,0) , bg = None , size = 60, color 
     reshaped_text = arabic_reshaper.reshape(word)
     bidi_text = get_display(reshaped_text)
     o_x_offset, o_y_offset = offsets
-    # print(background.size)
+#     print(background.size)
 #     print(o_x_offset,o_y_offset)
     o_x_offset = -int(o_x_offset * background.size[0])
     o_y_offset = -int(o_y_offset * background.size[1])
 #     print(o_x_offset,o_y_offset)
     x, y = background.size[0]//2 + o_x_offset ,background.size[1]//2 + o_y_offset
-    x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
-    y = y + int(np.random.randint(low = -background.size[1]//30, high = background.size[1]//30, size = 1))
+    if shift:
+        x = x + int(np.random.randint(low = -background.size[0]//30, high = background.size[0]//30, size = 1))
+        y = y + int(np.random.randint(low = -background.size[1]//30, high = background.size[1]//30, size = 1))
     draw.text((x, y), bidi_text, fill=color, font=font, anchor = 'mm')
     return background
 
@@ -73,25 +74,38 @@ def img_to_bbx(img):
     y_max, x_max = np.max(args,0)
     y_min, x_min = np.min(args,0)
 #     plt.imshow(img[y_min:y_max, x_min:x_max,:])
+#     plt.imshow(img)
     bbx = (x_min,x_max), (y_min, y_max)
-    o_x_offset = (x_min + x_max) / img.shape[1]  - 1
-    o_y_offset = (y_min + y_max) / img.shape[0]  - 1
+#     print(y_min,y_max)
+    o_x_offset = ((x_min + x_max) / img.shape[1] ) - 1
+    o_y_offset = ((y_min + y_max) / img.shape[0] ) - 1
     offsets = [o_x_offset , o_y_offset]
 #     print(o_x_offset,o_y_offset)
     sizes = np.array((y_max- y_min, x_max - x_min))
     return offsets, sizes
 
-def get_rect_size_for_word(word, font, size, bg_size = (400,700)):
-    img = create_word(word, font_name = font, size = size, color = (255,255,255), 
+def get_rect_size_for_word(word, font, size, bg_size = None):
+    if bg_size is None:
+        bg_size = (400, 70 * len(word))
+        bg_size = tuple((np.array(bg_size) * (size / 100)).astype(int))
+    img = create_word(word, font_name = font,shift = False, size = size, color = (255,255,255), 
                 bg_size = bg_size, bg_color = (0,0,0))
     return img_to_bbx(img)
 
-def resize_bg(backgroud_img, target_size):
+
+def resize_bg(backgroud_img, target_size, x_factor = None, y_factor = None):
     bg  = backgroud_img.copy()
     y,x = target_size.astype(int)
+    if x_factor is None:
+        x_factor = 1.1 + np.random.rand() / 6
+    if y_factor is None:
+        y_factor = 1.2 + np.random.rand() / 4
+    x = int(x*x_factor)
+    y = int(y*y_factor)       
     bg  = cv2.resize(bg, (x,y))
     bg = Image.fromarray(bg)
     return bg
+
 
 def augment(img, p = 0.5):
     filters = [ImageFilter.GaussianBlur(), ImageFilter.SHARPEN()]
@@ -116,6 +130,7 @@ def augment(img, p = 0.5):
 def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 'outputs/'):
     t1 = t()
     counter = 0
+    os.makedirs(output_dir , exist_ok = True)
     print('Output directory craeted.')
     assert isinstance(words, str) or isinstance(all_words, list) , "words argument should be either list or str"
     if isinstance(words, str):
@@ -126,7 +141,6 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
     assert isinstance(bgs, str) or isinstance(bgs, list)  , "bgs argument should be either list or str"
     if isinstance(bgs, str):
         bgs = get_all_bgs(bgs)
-    os.makedirs(output_dir , exist_ok = True)
     print(f'Found {len(words)} words.')
     print(f'Found {len(fonts)} fonts.')
     print(f'Found {len(bgs)} background images.')
@@ -134,16 +148,14 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
     for w_idx, word in enumerate(tqdm(words)):
         for f_idx, font in enumerate(fonts):
             for bg_idx, bg in enumerate(bgs):
-                if isinstance(size, str):
+                if isinstance(size, int):
                     pass
-                elif isinstance(size, list):
-                    size = np.random.choice(size)
                 elif size == 'random' or size is None:
                     size = int(np.random.randint(110,150,1))
                     
-                offsets, sizes = get_rect_size_for_word(word, font, size)
-                bg = resize_bg(bg, 1.25 * sizes)
-                img = create_word(word,offsets = offsets ,font_name= font,bg = bg , size= int(size//1.2))
+                bbx, sizes = get_rect_size_for_word(word, font, size)
+                bg = resize_bg(bg, sizes)
+                img = create_word(word, font_name= font,bg = bg, size= int(size//1.2))
                 img = augment(img, p = noise_p)
                 img.save(os.path.join(output_dir , f'w_{w_idx:04d}f_{f_idx:04d}b_{bg_idx:04d}.png' ))
                 counter += 1
