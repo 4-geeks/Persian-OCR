@@ -100,6 +100,8 @@ class Ui_Geeks4LabelTool(object):
         font = QtGui.QFont()
         font.setPointSize(11)
         self.saveButton.setFont(font)
+        # Shortcut (Ctrl + S) for "Save Button"
+        self.shortcut = QShortcut(QtGui.QKeySequence("Ctrl+s"),Geeks4LabelTool)
         self.saveButton.setObjectName("saveButton")
         self.ButtonLay.addWidget(self.saveButton)
 
@@ -246,11 +248,14 @@ class Ui_Geeks4LabelTool(object):
         # Listbar Item Selection
         self.listWidget.itemSelectionChanged.connect(self.ListBar)
 
-        # Save Output Click Function
+        # Save Output Click 
         self.SaveOutput.clicked.connect(self.save_path)
 
-        # Save Button Click Function
+        # Save Button Click 
         self.saveButton.clicked.connect(self.save_text)
+
+        # Save Button Shortcut Key
+        self.shortcut.activated.connect(self.save_text)
 
     def retranslateUi(self, Geeks4LabelTool):
         _translate = QtCore.QCoreApplication.translate
@@ -275,7 +280,7 @@ class Ui_Geeks4LabelTool(object):
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(Geeks4LabelTool,"Select File", "","All Files (*);;Iamges (*.jpg* *.png*) ", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(Geeks4LabelTool,"Select File", "","All Files (*);;Iamges (*.jpg *.png) ", options=options)
         self.viewer.setPhoto(QtGui.QPixmap(fileName))
         self.img_path = fileName
 
