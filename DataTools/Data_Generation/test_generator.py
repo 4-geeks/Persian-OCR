@@ -7,20 +7,23 @@ parser.add_argument('--fonts-dir', type=str, default='fonts',
  help='Directory that contains the ttf files for your fonts')
 parser.add_argument('--bg-dir', type=str, default='backgrounds',
  help='Directory that contains the backgrounds')
-parser.add_argument('--output-dir', type=str, default='outputs',
+parser.add_argument('--output-dir', type=str, default='outputs/fonts_test',
  help='Directory to save the output images')
 parser.add_argument('--size', type = int, default= None,
  help='size of the words that you want to create.')
-parser.add_argument('--noise-prob', type = int, default= 0.5,
- help='Directory that contains the backgrounds')
+parser.add_argument('--augment-prob', type = float, default= 0.5,
+ help='augmentation rate')
+parser.add_argument('--tight', action = 'store_true' , help =  'Wether you want the text to tightly fit the background')
+parser.add_argument('--keep-rate', type = float, help = 'The ratio for saving the images.' , default=0.5)
 
 opt = parser.parse_args()
 
 
-def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 'outputs/'):
+def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,
+                    output_dir = 'outputs/fonts_test',keep_rate = 0.5 , tight = False):
     t1 = t()
     counter = 0
-    print('Output directory craeted.')
+    
     assert isinstance(words, str) or isinstance(all_words, list) , "words argument should be either list or str"
     if isinstance(words, str):
         words = get_all_words(words)
@@ -31,10 +34,11 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
     if isinstance(bgs, str):
         bgs = get_all_bgs(bgs)
     os.makedirs(output_dir , exist_ok = True)
-    print(f'Found {len(words)} words.')
+    print('Output directory craeted.')
+    # print(f'Found {len(words)} words.')
     print(f'Found {len(fonts)} fonts.')
-    print(f'Found {len(bgs)} background images.')
-    print(f'In total {len(words) * len(fonts) * len(bgs)} Images will be created')
+    # print(f'Found {len(bgs)} background images.')
+    # print(f'In total {len(words) * len(fonts) * len(bgs)} Images will be created')
     words = [words[0]]
     bgs = [bgs[0]]
     for w_idx, word in enumerate(tqdm(words)):
@@ -46,9 +50,15 @@ def create_data_set(words, fonts, bgs ,size = None, noise_p = 0.5 ,output_dir = 
                     size = int(np.random.randint(110,150,1))
                     
                 O_old, sizes = get_rect_size_for_word(word, font, size)
-                bg = resize_bg(bg, sizes)
-                img = create_word(word, font_name = font,bg = bg, size= int(size//1.2) , O_old = O_old, shift=False)
-                img = augment(img, p = noise_p)
+                if not tight:
+                    size_factor = np.random.randint(120,150) / 100
+                    x_factor = 1.5 + np.random.rand()
+                    y_factor = 1 + np.random.rand() // 4
+                else: x_factor, y_factor, size_factor = 1 , 1 , 1.05
+                bg = resize_bg(bg, sizes, x_factor = x_factor, y_factor=y_factor)
+                img = create_word(word, font_name= font,bg = bg, size= size, shift=True,
+                                  O_old = O_old, sizes = sizes, size_factor=size_factor)
+                                  
                 font_name = os.path.split(font)[-1].split('.')[0]
                 img.save(os.path.join(output_dir , f'{font_name}.png') )
                 counter += 1
@@ -62,5 +72,7 @@ if __name__ == '__main__':
                     fonts = opt.fonts_dir,
                     bgs = opt.bg_dir ,
                     size = None,
-                    noise_p = opt.noise_prob,
-                    output_dir = opt.output_dir)
+                    augment_p = opt.augment_prob,
+                    output_dir = opt.output_dir,
+                    tight= opt.tight,
+                    keep_rate = opt.keep_rate)
