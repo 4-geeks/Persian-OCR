@@ -203,8 +203,15 @@ class Ui_Geeks4LabelTool(object):
         self.Lline.setObjectName("Lline")
         self.LlineLay.addWidget(self.Lline)
         self.gridLayout_2.addLayout(self.LlineLay, 0, 0, 1, 1)
+
+        # Image LayOut
         self.imgLay = QtWidgets.QVBoxLayout()
-        self.imgLay.setObjectName("imgLay")  
+        self.imgLay.setObjectName("imgLay")
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.textEdit.sizePolicy().hasHeightForWidth())
+        self.viewer.setSizePolicy(sizePolicy)
         self.imgLay.addWidget(self.viewer)
         self.gridLayout_2.addLayout(self.imgLay, 0, 1, 1, 1)
 
