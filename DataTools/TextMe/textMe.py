@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from qtpy.QtCore import Qt
+
 import sys
 import os
 from glob import glob
@@ -8,7 +10,6 @@ import cv2
 from PyQt5.QtGui import QPixmap, QIcon
 import json
 from datetime import datetime
-
 
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
@@ -34,6 +35,8 @@ class Ui_Geeks4LabelTool(object):
     def setupUi(self, Geeks4LabelTool):
         Geeks4LabelTool.setObjectName("Geeks4LabelTool")
         Geeks4LabelTool.resize(1800, 984)
+
+        # Create GridLayout
         self.gridLayoutWidget = QtWidgets.QWidget(Geeks4LabelTool)
         self.gridLayoutWidget.setGeometry(QtCore.QRect(10, 20, 1900, 984))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
@@ -130,41 +133,50 @@ class Ui_Geeks4LabelTool(object):
         self.gridLayout_2.addLayout(self.RlineLay, 0, 2, 1, 1)
         self.LlineLay = QtWidgets.QHBoxLayout()
         self.LlineLay.setObjectName("LlineLay")
+        
+        # 4Geeks Image
         self.geeksLayout = QtWidgets.QVBoxLayout()
         self.geeksLayout.setObjectName("geeksLayout")
         self.geekslabel = QtWidgets.QLabel(self.gridLayoutWidget)
         self.geekslabel.setEnabled(True)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setHorizontalStretch(-10)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.geekslabel.sizePolicy().hasHeightForWidth())
         self.geekslabel.setSizePolicy(sizePolicy)
         self.geekslabel.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.geekslabel.setText("")
         self.geekslabel.setTextFormat(QtCore.Qt.AutoText)
-        self.geekslabel.setPixmap(QtGui.QPixmap("4geeks.png"))
+        self.geekslabel.setPixmap(QtGui.QPixmap("icons/4geeks.png"))
         self.geekslabel.setObjectName("geekslabel")
         self.geeksLayout.addWidget(self.geekslabel)
         self.OpenLay = QtWidgets.QVBoxLayout()
         self.OpenLay.setObjectName("OpenLay")
-        self.OpenDir = QtWidgets.QPushButton(self.gridLayoutWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        
+        # Open Dir
+        self.OpenDir = QtWidgets.QToolButton(self.gridLayoutWidget)
+        self.OpenDir.setMaximumSize(QtCore.QSize(120, 70))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.OpenDir.sizePolicy().hasHeightForWidth())
         self.OpenDir.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
         font.setPointSize(11)
         self.OpenDir.setFont(font)
+        openDirIcon = QtGui.QPixmap("icons/open.png")
+        self.OpenDir.setIcon(QtGui.QIcon(openDirIcon))
+        self.OpenDir.setIconSize(QSize(64, 64))
+        self.OpenDir.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.OpenDir.setObjectName("OpenDir")
         self.OpenLay.addWidget(self.OpenDir)
 
         # Open File
-        self.OpenFile = QtWidgets.QPushButton(self.gridLayoutWidget)
-        self.OpenFile.setMaximumSize(QtCore.QSize(110, 30))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.OpenFile = QtWidgets.QToolButton(self.gridLayoutWidget)
+        self.OpenFile.setMaximumSize(QtCore.QSize(120, 70))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.OpenFile.sizePolicy().hasHeightForWidth())
         self.OpenFile.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
@@ -172,16 +184,19 @@ class Ui_Geeks4LabelTool(object):
         self.OpenFile.setFont(font)
         self.OpenFile.setAutoRepeat(False)
         self.OpenFile.setAutoExclusive(False)
-        self.OpenFile.setDefault(False)
+        openFileIcon = QtGui.QPixmap("icons/open.png")
+        self.OpenFile.setIcon(QtGui.QIcon(openFileIcon))
+        self.OpenFile.setIconSize(QSize(64, 64))
+        self.OpenFile.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.OpenFile.setObjectName("OpenFile")
         self.OpenLay.addWidget(self.OpenFile)
 
-        # Save Folder
-        self.SaveOutput = QtWidgets.QPushButton(self.gridLayoutWidget)
-        self.SaveOutput.setMaximumSize(QtCore.QSize(110, 30))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        # Save Json File
+        self.SaveOutput = QtWidgets.QToolButton(self.gridLayoutWidget)
+        self.SaveOutput.setMaximumSize(QtCore.QSize(120, 70))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.SaveOutput.sizePolicy().hasHeightForWidth())
         self.SaveOutput.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
@@ -189,10 +204,14 @@ class Ui_Geeks4LabelTool(object):
         self.SaveOutput.setFont(font)
         self.SaveOutput.setAutoRepeat(False)
         self.SaveOutput.setAutoExclusive(False)
-        self.SaveOutput.setDefault(False)
+        saveJson = QtGui.QPixmap("icons/save.ico")
+        self.SaveOutput.setIcon(QtGui.QIcon(saveJson))
+        self.SaveOutput.setIconSize(QSize(40, 40))
+        self.SaveOutput.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.SaveOutput.setObjectName("SaveOutput")
         self.OpenLay.addWidget(self.SaveOutput)
 
+        # Spacer for OpenLay and add LlineLay to GridLayout
         spacerItem = QtWidgets.QSpacerItem(20, 35, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.OpenLay.addItem(spacerItem)
         self.geeksLayout.addLayout(self.OpenLay)
@@ -218,16 +237,24 @@ class Ui_Geeks4LabelTool(object):
         self.retranslateUi(Geeks4LabelTool)
         QtCore.QMetaObject.connectSlotsByName(Geeks4LabelTool)
 
+        # Open Dir Click
         self.OpenDir.clicked.connect(self.show_dir)
+
+        # Open File Click
         self.OpenFile.clicked.connect(self.open_img)
+
+        # Listbar Item Selection
         self.listWidget.itemSelectionChanged.connect(self.ListBar)
 
+        # Save Output Click Function
         self.SaveOutput.clicked.connect(self.save_path)
+
+        # Save Button Click Function
         self.saveButton.clicked.connect(self.save_text)
 
     def retranslateUi(self, Geeks4LabelTool):
         _translate = QtCore.QCoreApplication.translate
-        Geeks4LabelTool.setWindowTitle(_translate("Geeks4LabelTool", "Dialog"))
+        Geeks4LabelTool.setWindowTitle(_translate("Geeks4LabelTool", "textMe"))
         self.saveButton.setText(_translate("Geeks4LabelTool", "Save"))
         self.prevButton.setText(_translate("Geeks4LabelTool", "Back"))
         self.nextButton.setText(_translate("Geeks4LabelTool", "Next"))
@@ -420,7 +447,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 scenerect = self.transform().mapRect(rect)
                 factor = min(viewrect.width() / scenerect.width(),
                              viewrect.height() / scenerect.height())
-                self.scale(factor, factor)
+                self.scale(factor*0.75, factor*0.75)
             self._zoom = 0
 
     def setPhoto(self, pixmap=None):
