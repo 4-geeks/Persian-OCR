@@ -37,12 +37,11 @@ class Ui_Geeks4LabelTool(object):
         self.gridLayoutWidget = QtWidgets.QWidget(Geeks4LabelTool)
         self.gridLayoutWidget.setGeometry(QtCore.QRect(10, 20, 1900, 984))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
-        
-
         self.gridLayout_2 = QtWidgets.QGridLayout(self.gridLayoutWidget)
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_2.setObjectName("gridLayout_2")
 
+        # For Stretching The Window
         Geeks4LabelTool.setLayout(self.gridLayout_2)
 
         self.RlineLay = QtWidgets.QHBoxLayout()
