@@ -2,7 +2,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from qtpy.QtCore import Qt
-
 import sys
 import os
 from glob import glob
@@ -25,6 +24,8 @@ class Ui_Geeks4LabelTool(object):
         self.img_path = None
         self.check_path = None
         self.img_idx = None
+        self.labels = []
+        self.flag = 0
         self.data = {
                 "version": "1.0.0",
                 "Created By": "4-Geeks",
@@ -86,6 +87,8 @@ class Ui_Geeks4LabelTool(object):
         font = QtGui.QFont()
         font.setPointSize(11)
         self.prevButton.setFont(font)
+        # Shortcut (Ctrl + D) for "Prev Button"
+        self.prev_shortcut = QShortcut(QtGui.QKeySequence("Ctrl+d"),Geeks4LabelTool)
         self.prevButton.setObjectName("prevButton")
         self.ButtonLay.addWidget(self.prevButton)
         
@@ -101,7 +104,7 @@ class Ui_Geeks4LabelTool(object):
         font.setPointSize(11)
         self.saveButton.setFont(font)
         # Shortcut (Ctrl + S) for "Save Button"
-        self.shortcut = QShortcut(QtGui.QKeySequence("Ctrl+s"),Geeks4LabelTool)
+        self.save_shortcut = QShortcut(QtGui.QKeySequence("Ctrl+s"),Geeks4LabelTool)
         self.saveButton.setObjectName("saveButton")
         self.ButtonLay.addWidget(self.saveButton)
 
@@ -117,6 +120,8 @@ class Ui_Geeks4LabelTool(object):
         font = QtGui.QFont()
         font.setPointSize(11)
         self.nextButton.setFont(font)
+        # Shortcut (Ctrl + F) for "Next Button"
+        self.next_shortcut = QShortcut(QtGui.QKeySequence("Ctrl+f"),Geeks4LabelTool)
         self.nextButton.setObjectName("nextButton")
         self.ButtonLay.addWidget(self.nextButton)
         self.textLay.addLayout(self.ButtonLay)
@@ -253,9 +258,19 @@ class Ui_Geeks4LabelTool(object):
 
         # Save Button Click 
         self.saveButton.clicked.connect(self.save_text)
-
         # Save Button Shortcut Key
-        self.shortcut.activated.connect(self.save_text)
+        self.save_shortcut.activated.connect(self.save_text)
+
+        # Next Button Click 
+        self.nextButton.clicked.connect(self.next_image)
+        # Save Button Shortcut Key
+        self.next_shortcut.activated.connect(self.next_image)
+
+        # Back Button Click 
+        self.prevButton.clicked.connect(self.prev_image)
+        # Back Button Shortcut Key
+        self.prev_shortcut.activated.connect(self.prev_image)
+
 
     def retranslateUi(self, Geeks4LabelTool):
         _translate = QtCore.QCoreApplication.translate
@@ -311,27 +326,59 @@ class Ui_Geeks4LabelTool(object):
             IMG_PATH.extend(glob(str(folderpath) + '/*.png'))
             for item in IMG_PATH:
                 self.listWidget.addItem(item)
+        
+        if self.flag == 0:
+            self.listWidget.setCurrentRow(0)
+            self.flag = 1
+    
+
+    def prev_image(self):
+        self.labels = [self.listWidget.item(i).text() for i in range(self.listWidget.count())]
+        label_idx = self.labels.index(self.img_path)
+
+        if label_idx > 0:
+            self.listWidget.setCurrentRow(label_idx-1)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("There Is No Item Left!")
+            msg.setInformativeText('Move Forward')
+            msg.setWindowTitle("Warning")
+            msg.exec_()
+
+
+    def next_image(self):
+        self.labels = [self.listWidget.item(i).text() for i in range(self.listWidget.count())]
+        label_idx = self.labels.index(self.img_path)
+
+        if label_idx < len(self.labels)-1:
+            self.listWidget.setCurrentRow(label_idx+1)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("There Is No Item Left!")
+            msg.setInformativeText('Move Back')
+            msg.setWindowTitle("Warning")
+            msg.exec_()
 
 
     def ListBar(self):
         # Clear TextFile
         self.textEdit.clear()
 
-        fileName = str(self.listWidget.selectedItems()[0].text())
-        self.viewer.setPhoto(QtGui.QPixmap(fileName))
-        self.img_path = fileName
+        self.img_path = str(self.listWidget.selectedItems()[0].text())
+        self.viewer.setPhoto(QtGui.QPixmap(self.img_path))
 
         # Set Save Button Name to Save
         self.saveButton.setText("Save")
         
         try:
-            old_label = [(counter, item) for (counter, item) in enumerate(self.data['data']) if item["imagePath"] == f'{fileName}']
+            old_label = [(counter, item) for (counter, item) in enumerate(self.data['data']) if item["imagePath"] == f'{self.img_path}']
             self.textEdit.insertPlainText(old_label[0][1]['label'])
             self.check_path = old_label[0][1]["imagePath"]
             self.img_idx = old_label[0][0]
         except:
             pass
-
 
 
     def save_path(self):
@@ -414,8 +461,8 @@ class Ui_Geeks4LabelTool(object):
         except Exception as e :
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
-            msg.setText("Error")
-            msg.setInformativeText('Please Open Your Image Or Create Your Output File')
+            msg.setText("Please Create Your Output File")
+            msg.setInformativeText('')
             msg.setWindowTitle("Error")
             msg.exec_()
 
