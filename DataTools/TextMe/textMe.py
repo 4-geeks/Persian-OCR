@@ -20,7 +20,6 @@ class Ui_Geeks4LabelTool(object):
         self.viewer = PhotoViewer(self)
         self.counter = 0
         self.S_File = None
-        self.currentDate = None
         self.img_path = None
         self.check_path = None
         self.img_idx = None
@@ -29,7 +28,7 @@ class Ui_Geeks4LabelTool(object):
         self.data = {
                 "version": "1.0.0",
                 "Created By": "4-Geeks",
-                "date": f"{self.currentDate}",
+                "date": "",
                 "data": []
                 }
 
@@ -41,12 +40,96 @@ class Ui_Geeks4LabelTool(object):
         self.gridLayoutWidget = QtWidgets.QWidget(Geeks4LabelTool)
         self.gridLayoutWidget.setGeometry(QtCore.QRect(10, 20, 1900, 984))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
-        self.gridLayout_2 = QtWidgets.QGridLayout(self.gridLayoutWidget)
-        self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.gridLayoutWidget)
+        self.verticalLayout_2.setContentsMargins(7, 5, 7, 7)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+
+        # Create MenuBar
+        self.menubar = QtWidgets.QMenuBar(self.gridLayoutWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHeightForWidth(self.menubar.sizePolicy().hasHeightForWidth())
+        self.menubar.setSizePolicy(sizePolicy)
+        self.menubar.setMinimumSize(QtCore.QSize(10, 10))
+        self.menubar.setMaximumSize(QtCore.QSize(800, 100))
+        font = self.menubar.font()
+        font.setPointSize(12)
+        self.menubar.setFont(font)
+        ############################################## File #################################################
+        actionFile = self.menubar.addMenu("&File")
+        font = self.menubar.font()
+        font.setPointSize(10)
+        # File -> Open Dir
+        openDirAct = QAction(QIcon('icons/open.png'), '&Open Dir', self.gridLayoutWidget)
+        openDirAct.setStatusTip('Open New Directory')
+        openDirAct.setFont(font)
+        openDirAct.triggered.connect(self.show_dir)
+        actionFile.addAction(openDirAct)
+        # File -> Open File
+        openFileAct = QAction(QIcon('icons/open.png'), '&Open File', self.gridLayoutWidget)
+        openFileAct.setStatusTip('Open New File')
+        openFileAct.setFont(font)
+        openFileAct.triggered.connect(self.open_img)
+        actionFile.addAction(openFileAct)
+        # File -> Save Output File
+        saveJason = QAction(QIcon('icons/save.ico'), '&Save Json', self.gridLayoutWidget)
+        saveJason.setStatusTip('Save Jason')
+        saveJason.setFont(font)
+        saveJason.triggered.connect(self.save_path)
+        actionFile.addAction(saveJason)
+        # File -> Exit
+        actionFile.addSeparator()
+        exitAct = QAction(QIcon('icons/exit.webp'), '&Exit', self.gridLayoutWidget)
+        exitAct.setShortcut('Ctrl+Q')
+        exitAct.setStatusTip('Exit Application')
+        exitAct.setFont(font)
+        exitAct.triggered.connect(qApp.quit)
+        actionFile.addAction(exitAct)
+        ############################################## File #################################################
+
+        ############################################## View #################################################
+        # actionFile = self.menubar.addMenu("&View")
+        # actionFile.addAction("New")
+        # actionFile.addAction("Open")
+        # actionFile.addAction("Save")
+        ############################################## View #################################################
+
+        ############################################## Help #################################################
+        actionFile = self.menubar.addMenu(("&Help"))
+        # Help -> Save Image Label
+        saveLabel = QAction(QIcon('icons/save.png'), '&Save Image Label            Ctrl+S', self.gridLayoutWidget)
+        saveLabel.setStatusTip('Save Image Label')
+        saveLabel.setFont(font)
+        actionFile.addAction(saveLabel)
+        # File -> Next Image
+        nextImage = QAction(QIcon('icons/next.png'), '&Next Image                      Ctrl+F', self.gridLayoutWidget)
+        nextImage.setStatusTip('Next Image')
+        nextImage.setFont(font)
+        actionFile.addAction(nextImage)
+        # File -> Save Output File
+        prevImage = QAction(QIcon('icons/prev.webp'), '&Previous Image                Ctrl+D', self.gridLayoutWidget)
+        prevImage.setStatusTip('Previous Image')
+        prevImage.setFont(font)
+        actionFile.addAction(prevImage)
+        ############################################## Help #################################################
+        # MenuBar Layout
+        self.verticalMenuLay = QtWidgets.QVBoxLayout(self.gridLayoutWidget)
+        self.verticalMenuLay.setObjectName("verticalMenuLay")
+        self.verticalMenuLay.addWidget(self.menubar)
+        self.verticalLayout_2.addLayout(self.verticalMenuLay)
+
+        # Horizental Line to Seprate Menu Bar and GridLayout
+        self.menuAndGridSep = QFrame(self.gridLayoutWidget)
+        self.menuAndGridSep.setObjectName(u"menuAndGridSep")
+        self.menuAndGridSep.setFrameShape(QFrame.HLine)
+        self.menuAndGridSep.setFrameShadow(QFrame.Sunken)
+        self.verticalLayout_2.addWidget(self.menuAndGridSep)
+
+        # Set gridLayout_2
+        self.gridLayout_2 = QtWidgets.QGridLayout()
         self.gridLayout_2.setObjectName("gridLayout_2")
 
         # For Stretching The Window
-        Geeks4LabelTool.setLayout(self.gridLayout_2)
+        Geeks4LabelTool.setLayout(self.verticalLayout_2)
 
         self.RlineLay = QtWidgets.QHBoxLayout()
         self.RlineLay.setObjectName("RlineLay")
@@ -177,7 +260,7 @@ class Ui_Geeks4LabelTool(object):
         self.OpenDir.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.OpenDir.setObjectName("OpenDir")
         self.OpenLay.addWidget(self.OpenDir)
-
+    
         # Open File
         self.OpenFile = QtWidgets.QToolButton(self.gridLayoutWidget)
         self.OpenFile.setMaximumSize(QtCore.QSize(120, 70))
@@ -241,6 +324,8 @@ class Ui_Geeks4LabelTool(object):
         self.imgLay.addWidget(self.viewer)
         self.gridLayout_2.addLayout(self.imgLay, 0, 1, 1, 1)
 
+        self.verticalLayout_2.addLayout(self.gridLayout_2)
+
         self.retranslateUi(Geeks4LabelTool)
         QtCore.QMetaObject.connectSlotsByName(Geeks4LabelTool)
 
@@ -263,7 +348,7 @@ class Ui_Geeks4LabelTool(object):
 
         # Next Button Click 
         self.nextButton.clicked.connect(self.next_image)
-        # Save Button Shortcut Key
+        # Next Button Shortcut Key
         self.next_shortcut.activated.connect(self.next_image)
 
         # Back Button Click 
@@ -298,9 +383,6 @@ class Ui_Geeks4LabelTool(object):
         fileName, _ = QFileDialog.getOpenFileName(Geeks4LabelTool,"Select File", "","All Files (*);;Iamges (*.jpg *.png) ", options=options)
         self.viewer.setPhoto(QtGui.QPixmap(fileName))
         self.img_path = fileName
-
-        # if fileName:
-        #     self.listWidget.addItem(fileName)
 
         try:
             old_label = [(counter, item) for (counter, item) in enumerate(self.data['data']) if item["imagePath"] == f'{fileName}']
