@@ -215,8 +215,8 @@ def create_data_set(words, fonts, bgs ,size = None, augment_p = 0.7 ,
                     output_dir = 'outputs/',keep_rate = 0.5 , tight = False):
 
     labels = {}
-    labels['version'] = 1.1
-    labels['Created By'] = 'Geeks'
+    labels['version'] = "1.0.0"
+    labels['Created By'] = '4-Geeks'
     right_now = str(datetime.datetime.now())
     labels['date'] = right_now
     exp_name = right_now.replace('-','').replace(':','').replace(' ','_').replace('.','_')
