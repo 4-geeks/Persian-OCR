@@ -44,13 +44,44 @@ class Ui_Geeks4LabelTool(object):
         self.verticalLayout_2.setContentsMargins(7, 5, 7, 7)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
 
+        # MenuBar BackGround
+        self.frame_2 = QFrame(self.gridLayoutWidget)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setMinimumSize(QSize(0, 30))
+        self.frame_2.setStyleSheet(u"background-color: rgb(34,37,49)")
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
+
         # Create MenuBar
-        self.menubar = QtWidgets.QMenuBar(self.gridLayoutWidget)
+        self.menubar = QtWidgets.QMenuBar(self.frame_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHeightForWidth(self.menubar.sizePolicy().hasHeightForWidth())
         self.menubar.setSizePolicy(sizePolicy)
         self.menubar.setMinimumSize(QtCore.QSize(10, 10))
         self.menubar.setMaximumSize(QtCore.QSize(800, 100))
+        
+        self.menubar.setStyleSheet("""
+            QMenuBar {
+                color: rgb(255,255,255);
+            }
+
+            QMenuBar::item {
+                color: rgb(255,255,255);
+            }
+
+            QMenuBar::item::selected {
+                color: rgb(255,255,255);
+            }
+
+            QMenu {
+                color: rgb(200,200,200);
+            }
+
+            QMenu::item::selected {
+                color: rgb(255,255,255);
+            }
+        """)
+
         font = self.menubar.font()
         font.setPointSize(12)
         self.menubar.setFont(font)
@@ -114,7 +145,7 @@ class Ui_Geeks4LabelTool(object):
         # MenuBar Layout
         self.verticalMenuLay = QtWidgets.QVBoxLayout(self.gridLayoutWidget)
         self.verticalMenuLay.setObjectName("verticalMenuLay")
-        self.verticalMenuLay.addWidget(self.menubar)
+        self.verticalMenuLay.addWidget(self.frame_2)
         self.verticalLayout_2.addLayout(self.verticalMenuLay)
 
         # Horizental Line to Seprate Menu Bar and GridLayout
@@ -148,6 +179,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.textEdit.sizePolicy().hasHeightForWidth())
         self.textEdit.setSizePolicy(sizePolicy)
+        self.textEdit.setStyleSheet("color: rgb(255, 255, 255);")
         font = QtGui.QFont()
         font.setPointSize(16)
         self.textEdit.setFont(font)
@@ -167,6 +199,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setHeightForWidth(self.prevButton.sizePolicy().hasHeightForWidth())
         self.prevButton.setSizePolicy(sizePolicy)
         self.prevButton.setMaximumSize(QtCore.QSize(150, 30))
+        self.prevButton.setStyleSheet("QPushButton:pressed{color: white} QPushButton{color: white}")
         font = QtGui.QFont()
         font.setPointSize(11)
         self.prevButton.setFont(font)
@@ -183,6 +216,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setHeightForWidth(self.saveButton.sizePolicy().hasHeightForWidth())
         self.saveButton.setSizePolicy(sizePolicy)
         self.saveButton.setMaximumSize(QtCore.QSize(150, 30))
+        self.saveButton.setStyleSheet("QPushButton:pressed{color: white} QPushButton{color: white}")
         font = QtGui.QFont()
         font.setPointSize(11)
         self.saveButton.setFont(font)
@@ -200,6 +234,7 @@ class Ui_Geeks4LabelTool(object):
         self.nextButton.setSizePolicy(sizePolicy)
         self.nextButton.setMaximumSize(QtCore.QSize(150, 30))
         self.nextButton.setSizeIncrement(QtCore.QSize(0, 20))
+        self.nextButton.setStyleSheet("QPushButton:pressed{color: white} QPushButton{color: white}")
         font = QtGui.QFont()
         font.setPointSize(11)
         self.nextButton.setFont(font)
@@ -216,6 +251,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.listWidget.sizePolicy().hasHeightForWidth())
         self.listWidget.setSizePolicy(sizePolicy)
+        self.listWidget.setStyleSheet("QListWidget:pressed{color: white} QListWidget{color: white}")                
         self.listWidget.setMaximumSize(QtCore.QSize(300, 800))
         self.listWidget.setObjectName("listWidget")
         self.textLay.addWidget(self.listWidget)
@@ -251,6 +287,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.OpenDir.sizePolicy().hasHeightForWidth())
         self.OpenDir.setSizePolicy(sizePolicy)
+        self.OpenDir.setStyleSheet("QToolButton:pressed{color: white} QToolButton{color: white}")
         font = QtGui.QFont()
         font.setPointSize(11)
         self.OpenDir.setFont(font)
@@ -269,6 +306,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.OpenFile.sizePolicy().hasHeightForWidth())
         self.OpenFile.setSizePolicy(sizePolicy)
+        self.OpenFile.setStyleSheet("QToolButton:pressed{color: white} QToolButton{color: white}")        
         font = QtGui.QFont()
         font.setPointSize(11)
         self.OpenFile.setFont(font)
@@ -289,6 +327,7 @@ class Ui_Geeks4LabelTool(object):
         sizePolicy.setVerticalStretch(70)
         sizePolicy.setHeightForWidth(self.SaveOutput.sizePolicy().hasHeightForWidth())
         self.SaveOutput.setSizePolicy(sizePolicy)
+        self.SaveOutput.setStyleSheet("QToolButton:pressed{color: white} QToolButton{color: white}")                
         font = QtGui.QFont()
         font.setPointSize(11)
         self.SaveOutput.setFont(font)
@@ -378,9 +417,11 @@ class Ui_Geeks4LabelTool(object):
         # Set Save Button Name to Save
         self.saveButton.setText("Save")
 
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(Geeks4LabelTool,"Select File", "","All Files (*);;Iamges (*.jpg *.png) ", options=options)
+        dialog = QtWidgets.QFileDialog(None, windowTitle='Select File')
+        dialog.setOptions(dialog.DontUseNativeDialog)
+        # dialog.setStyleSheet("color: rgb(255, 255, 255);")
+        fileName, _ = dialog.getOpenFileName(None,"Select File", "","All Files (*);;Iamges (*.jpg *.png) ", options=dialog.options())
+        
         self.viewer.setPhoto(QtGui.QPixmap(fileName))
         self.img_path = fileName
 
@@ -395,11 +436,12 @@ class Ui_Geeks4LabelTool(object):
 
     def show_dir(self):
         # folderpath = QFileDialog.getExistingDirectory(Geeks4LabelTool, 'Select Folder',"./")
-
-        dialog = QtWidgets.QFileDialog(Geeks4LabelTool, windowTitle='Select directory')
+        # Geeks4LabelTool -> None
+        dialog = QtWidgets.QFileDialog(None, windowTitle='Select Directory')
         dialog.setDirectory( __file__)
         dialog.setFileMode(dialog.Directory)
         dialog.setOptions(dialog.DontUseNativeDialog)
+        # dialog.setStyleSheet("color: rgb(255, 255, 255);")
 
         if  dialog.exec_():
             folderpath = dialog.selectedFiles()[0]
@@ -465,7 +507,7 @@ class Ui_Geeks4LabelTool(object):
 
     def save_path(self):
         if self.counter ==0 or self.S_File[0] == '' :
-            self.S_File = QtWidgets.QFileDialog.getSaveFileName(None,'SaveJsonFile','./', "Json File (*.json)")
+            self.S_File = QtWidgets.QFileDialog.getSaveFileName(None,'Save Json File','./', "Json File (*.json)")
             self.S_File = list(self.S_File)
 
         if self.S_File[0] :
@@ -564,7 +606,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,102,102)))
+        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(34,37,49)))
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
 
     def hasPhoto(self):
@@ -631,7 +673,7 @@ if __name__ == '__main__':
     ui.setupUi(Geeks4LabelTool)
 
     #BackGround Color
-    Geeks4LabelTool.setStyleSheet("background-color: #c7eaf3;") 
+    Geeks4LabelTool.setStyleSheet("background-color: #1A1C27;") 
 
     Geeks4LabelTool.show()
     sys.exit(app.exec_())
