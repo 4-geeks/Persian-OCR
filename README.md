@@ -19,4 +19,8 @@ Moreover, to test for your fonts run the command below:
 
 Note that there the aformentioned folders contain the required material so you can easily generate images without the need to add backgrounds, fonts or words.
 
+## Data Labeling
+[craft model](https://drive.google.com/file/d/1Jk4eGD7crsqCCg9C9VjCLkMN3ze8kutZ/view?usp=sharing)
 Designed by 4Geeks.
+
+```$ python pdf2image_convertor.py --folder your_pdf_folder```
